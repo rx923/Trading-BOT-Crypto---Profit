@@ -1,0 +1,86 @@
+#order of operations for the trading RVNUSDT pair.
+# Step (1)
+# 1. Importing necessary modules
+# 2. configuring the API & Secret Key for the trading to be done.
+# 3. creating main file for opening trades, checking account balance, checking account open positions, defining the function logic for opening a position trade with the required parameters and settings
+# 4. creating file for starting the application using dash and importing the required modules in each of the files.
+# 5. creating file for monitoring the position of the currently opened trade and updating the account balance information in real time for the position that is opened.
+# 6. setting open order parameters, stop loss orders's parameters, setting take profit order's parameters, close position parameters.
+
+#Step (2)
+# 1. Pulling and fetching data for heikin ashi candles for 1 minutes, 3 minutes, and 5 minutes charts, adding a lookback period for which the data to be pulled set to 1 hour
+# 2. Pulling and fetching data for RSI indicator for 1 minutes, 3 minutes, and 5 minutes charts, adding a lookback period for which the data to be pulled set to 1 hour
+# 3. Pulling and fetching data for MACD indicator for 1 minutes, 3 minutes, and 5 minutes charts, adding a lookback period for which the data to be pulled set to 1 hour
+# 4. Pulling and fetching data for VWAP indicator for 1 minutes, 3 minutes, and 5 minutes charts, adding a lookback period for which the data to be pulled set to 1 hour
+# 5. Pulling and fetching data for KDJ indicator for 1 minutes, 3 minutes, and 5 minutes charts, adding a lookback period for which the data to be pulled set to 1 hour
+
+#Step (3)
+# 1. Calculating open candle's price value as int and close values as int of the heikin ashi candle for the coin pair that is being traded. Calculations are done for 1m, 3m and 5m charts
+# 2. Calculating minium and maximum RSI indicator values for 1m, 3m and 5m charts
+# 3. Calculating MACD values for 1minutes, 3 minutes and 5 minutes charts
+# 4. Calculating the VWAP value based on the current VWAP current fetched level if the price of the closing candles is above the VWAP's value to print a message on the chart for 1m, 3m and 5 minutes charts. 
+# 5. As well if the price of the traded pair is below the VWAP current fetched value, print a message on the chart for 1m, 3m and 5m charts
+# 6. Calculating KDJ values if the J line is above the K line's value and D line's value, then print a message that the J value is above and print a message that possible long position is to be opened otherwise if the J line's value drops below the value of the D line's value and K line's value, then print a message that a possible short position is to be opened.
+
+#Step (4)
+# 1. Preparing the charts where the dashboards for the 1m, 3m and 5 minutes charts are b eing displayed.
+# 2. Configuring charts for 1m, 3m and 5m to have the horizontal axis on the lower side with the time line of the current date
+# 3. Configuring charts for 1m, 3m and 5m to have the left side containing the price value of the pair traded.
+# 4. Configuring the charts for 1m,3m and 5m to have the right Y axis containing the toggling of the lines which have been calculated and plotted on the chart with proper plotting parameters.
+
+#Step (5)
+# 1. Configuring a function to take into calculation the entire returned values from the Step (3) and add annotations on the Chart for opening LONG position or opening SHORT position.
+# as well there should be signals set as red dots for the short message annotation and green dots for the long message annotation.
+
+
+#Some of the crypto pairs which orders do not get opened with a stop loss and take profit orders
+# SFPUSDT, LDOUSDT, SSVUSDT, 
+
+
+# Configuration of the overall bot should be such that:
+# Creates klines instances fro fetching data, after data is fetched and calculated, the function's value that handles the calculations is awaited inside the required fucntions,
+# Upon having calculated sufficiently the indicator's values from the dataframe, it then needs to send the response to the function which handles the order placement on the market, 
+# once the order function for placing the position and related parameters suchs as leverage, size, market price, reduce only false, and stop loss order that is being triggered after the main order for short is placed as well as the take profit market limits that are placed after the stop loss order is being placed, should then await fetching and converting data from that function so that it halts  for the ongoing position of the symbol which ahs a running or ongoing position
+# the refetching of data and data conversion. Upon position closure either at market level by reaching take profit or stop loss, it resumes fetching data for the symbol.
+  
+
+
+trading_bot/
+├── app.py
+├── config.py
+├── requirements.txt
+├── static/
+│   └── style.css
+├── templates/
+│   └── index.html
+├── indicators/
+│   ├── candles.py
+│   ├── kdj.py
+│   ├── macd.py
+│   ├── rsi.py
+│   └── vwap.py
+├── utils/
+│   ├── data_fetcher.py
+│   ├── plotter.py
+│   ├── position_monitor.py
+│   ├── profit_tracker.py
+│   └── trader.py
+└── README.md
+
+\\#
+#
+0.1) Proceed with initializing Required modules, Loading API KEYS from the environment, Loading API SECRET from the environment.
+0.2) Proceed with confirming checks for client initialization.
+0.3) Proceed with configuring one class for the required orders for processing klines data calls.
+0.4) Add a positional parameter of a maximum number of requests that can be retreived from the API call for the klines.
+0.5) Add a positional parameter of the symbol for which the data is being retreived from the API call for the symbol.
+0.6) Add a positional parameter of the start time of fetching data, an end time of fetching data.
+0.7) Add a keyword parameter with True or False value
+0.8) Add a keyword parameter with a True or False value for calculating the number of attempts for which the data has been fetched for each symbol and a cool off period
+0.9) Add a keyword parameter with a True or False value for Stopping data fetching for the symbol of data has been already fetched for the symbol.
+0.10) Add a specific parameter for cleaning and logging the data within the function
+0.11) Add a configuration logging to the function's configuration ensuring that it is correctly handling the retries in case it fails to fetch after a number of 3 attempts during the time of 1 minute
+0.12) Configure function such that it correctly break point of the fetching loop if there was a confirmed signal triggered by the keyword parameter
+0.13) Data fetched finally should return the klines values for the fetched symbol. klines values are OHLCV and timestamp these values should be filtered out from the fetched data. 
+1) Fetch Klines Data -> Store Klines Datas as a DataFrame -> Convert DataFrame columns to Numerical Value -> Return columns of the Numerical Values to the required function.
+2) Proceed with Data conversion 
