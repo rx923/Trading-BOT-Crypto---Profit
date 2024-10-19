@@ -98,62 +98,86 @@ class OrderManagerTakeProfit:
             logging.error(f"Unexpected error while fetching klines for {symbol}: {e}")
             return None
 
+
+
     async def calculate_dynamic_take_profit_short(self, symbol):
-        try:
-            # No need to create a new client here
-            # client = AsyncClient.create(api_key, api_secret)  # Remove this line
-            
-            # Ensure self.running_positions is properly initialized
-            if self.running_positions is None:
-                self.running_positions = {}
+    try:
+        # Ensure self.running_positions is properly initialized
+        if self.running_positions is None:
+            self.running_positions = {}
 
-            # Check if the symbol exists in running_positions
-            if symbol not in self.running_positions:
-                logging.error(f"No ongoing positions found for {symbol}. Cannot calculate dynamic take profit.")
-                return None
-
-            position = self.running_positions[symbol]
-            entry_price = position.get('entryPrice', Decimal('0'))
-            position_quantity = position.get('positionAmt', Decimal('0'))
-
-            # Validate entry_price and position_quantity
-            if entry_price <= 0 or position_quantity <= 0:
-                logging.error(f"Invalid entry price ({entry_price}) or position quantity ({position_quantity}) for {symbol}. Cannot calculate dynamic take profit.")
-                return None
-
-            # Calculate take-profit levels and quantities
-            take_profit_levels = []
-            take_profit_quantities = []
-            remaining_quantity = position_quantity
-
-            for i in range(1, 11):  # Create 10 take-profit levels
-                take_profit_ratio = Decimal('0.002') * i  # Example: 0.2% decrease for each level
-                take_profit_level = entry_price * (Decimal('1') - take_profit_ratio)  # Lower than entry price
-                take_profit_levels.append(take_profit_level)
-
-                # Calculate quantity to close at each level
-                if remaining_quantity > 0:
-                    quantity_to_close = position_quantity * Decimal('0.1')  # 10% of the total position
-                    take_profit_quantities.append(quantity_to_close)
-                    remaining_quantity -= quantity_to_close
-                else:
-                    take_profit_quantities.append(Decimal('0'))
-
-            logging.info(f"[{symbol}] Calculated take profit levels: {take_profit_levels}")
-            logging.info(f"[{symbol}] Calculated take profit quantities: {take_profit_quantities}")
-
-            return {
-                'take_profit_levels': take_profit_levels,
-                'take_profit_quantities': take_profit_quantities
-            }
-
-        except Exception as e:
-            logging.error(f"Error calculating dynamic take profit ratios for {symbol}: {str(e)}")
+        # Check if the symbol exists in running_positions
+        if symbol not in self.running_positions:
+            logging.error(f"No ongoing positions found for {symbol}. Cannot calculate dynamic take profit.")
             return None
 
-        finally:
-            # Ensure that any necessary cleanup or final logging occurs
-            logging.info(f"Completed calculation attempt for {symbol}.")
+        position = self.running_positions[symbol]
+
+        # Retrieve entry_price and position_quantity
+        entry_price = position.get('entryPrice')
+        position_quantity = position.get('positionAmt')
+
+        # Separate validation for entry_price
+        if entry_price is None:
+            logging.error(f"Failed to retrieve 'entryPrice' for {symbol}.")
+            return None
+        else:
+            entry_price = Decimal(entry_price)  # Ensure it's a Decimal
+
+        # Separate validation for position_quantity
+        if position_quantity is None:
+            logging.error(f"Failed to retrieve 'positionAmt' for {symbol}.")
+            return None
+        else:
+            position_quantity = Decimal(position_quantity)  # Ensure it's a Decimal
+
+        # Check if entry_price and position_quantity are positive
+        if entry_price <= 0:
+            logging.error(f"Invalid entry price ({entry_price}) for {symbol}. Cannot calculate dynamic take profit.")
+            return None
+
+        if position_quantity <= 0:
+            logging.error(f"Invalid position quantity ({position_quantity}) for {symbol}. Cannot calculate dynamic take profit.")
+            return None
+
+        # Calculate take-profit levels and quantities
+        take_profit_levels = []
+        take_profit_quantities = []
+        remaining_quantity = position_quantity
+
+        # Process each take-profit level and log the calculation
+        for i in range(1, 11):  # Create 10 take-profit levels
+            take_profit_ratio = Decimal('0.002') * i  # Example: 0.2% decrease for each level
+            take_profit_level = entry_price * (Decimal('1') - take_profit_ratio)  # Lower than entry price
+            take_profit_levels.append(take_profit_level)
+
+            # Calculate quantity to close at each level
+            if remaining_quantity > 0:
+                quantity_to_close = position_quantity * Decimal('0.1')  # 10% of the total position
+                remaining_quantity -= quantity_to_close
+                take_profit_quantities.append(quantity_to_close)
+            else:
+                take_profit_quantities.append(Decimal('0'))
+
+            # Log the current level and calculations for the symbol
+            logging.info(f"[{symbol}] Level {i}: Take profit at {take_profit_level:.6f}, Quantity to close: {quantity_to_close:.6f}")
+
+        # Log the final results
+        logging.info(f"[{symbol}] Final take profit levels: {take_profit_levels}")
+        logging.info(f"[{symbol}] Final take profit quantities: {take_profit_quantities}")
+
+        return {
+            'take_profit_levels': take_profit_levels,
+            'take_profit_quantities': take_profit_quantities
+        }
+
+    except Exception as e:
+        logging.error(f"Error calculating dynamic take profit ratios for {symbol}: {str(e)}")
+        return None
+
+    finally:
+        # Ensure that any necessary cleanup or final logging occurs
+        logging.info(f"Completed calculation attempt for {symbol}.")
 
 
     async def place_take_profit_order_short(self, symbol: str, entry_price: Decimal, take_profit_levels: list[Decimal], initial_quantity: Decimal) -> bool:
